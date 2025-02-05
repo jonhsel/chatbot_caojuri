@@ -16,10 +16,10 @@ with open('style.css') as f:
 
 #################
 
-st.image('images/juria.png')
+#st.image('images/juria.png')
 
 
-TIPOS_ARQUIVOS = ['Arquivos .pdf', 'Site', 'Youtube', 'Arquivos .csv', 'Arquivos .txt']
+TIPOS_ARQUIVOS = ['PASTA','Arquivos .pdf', 'Site', 'Youtube', 'Arquivos .csv', 'Arquivos .txt']
 
 CONFIG_MODELOS = {  'OpenAI': 
                             {'modelos': ['gpt-4o-mini', 'gpt-4o'],
@@ -32,6 +32,11 @@ MEMORIA = ConversationBufferMemory()
 
 def carrega_arquivo (tipo_arquivo, arquivo):
     
+
+    if tipo_arquivo == 'PASTA':
+        
+        documento = carrega_pasta(arquivo)
+
 
     if tipo_arquivo == 'Site':
         
@@ -125,6 +130,22 @@ def sidebar():
     tabs_assistente = st.tabs(['Uploads de Arquivos', 'Modelo de IA'])
     with tabs_assistente[0]:
         tipo_arquivo = st.selectbox('selecione o tipo de URL ou arquivo', TIPOS_ARQUIVOS)
+        if tipo_arquivo == 'PASTA':
+            arquivo = st.file_uploader('Carregue a pasta de arquivos .pdf', type=['.pdf'], accept_multiple_files=True)
+            if st.button("Carregar Arquivos"):
+                if arquivos:
+                    documento = ""
+                    for arquivo in arquivos: # Itera sobre os arquivos carregados
+                        try:
+                            conteudo_arquivo = carrega_arquivo(tipo_arquivo, arquivo) # Carrega cada arquivo individualmente
+                            documento += conteudo_arquivo + "\n\n" # Concatena o conteúdo dos arquivos
+                        except Exception as e:
+                            st.error(f"Erro ao carregar o arquivo {arquivo.name}: {e}")
+                    st.write("Conteúdo dos arquivos:")
+                    st.write(documento)
+                else:
+                    st.warning("Por favor, selecione os arquivos da pasta.")
+
         if tipo_arquivo == 'Site':
             arquivo = st.text_input('Digite a URL do site')
         if tipo_arquivo == 'Youtube':

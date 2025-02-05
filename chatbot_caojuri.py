@@ -32,11 +32,11 @@ CONFIG_MODELOS = {  'OpenAI':
 
 MEMORIA = ConversationBufferMemory()
 
-def carrega_arquivo():
+def carrega_arquivo(caminho):
 
     def carrega_pasta():
         documentos = []
-        caminho = "arquivos/"  # Certifique-se que a pasta "arquivos" existe
+        # Certifique-se que a pasta "arquivos" existe
         try:
             for arquivo in os.listdir(caminho):
                 if arquivo.endswith(".pdf"): # Verifica se o arquivo é PDF
@@ -51,9 +51,11 @@ def carrega_arquivo():
         except FileNotFoundError:
             print(f"Pasta 'arquivos' não encontrada em {os.getcwd()}") # Informa o diretório atual
             return None # Ou [] dependendo do que precisa que sua função retorne
-
         return documentos
-    documentos = carrega_pasta()
+    documents = carrega_pasta()
+    return documents
+
+
     
     
 
@@ -85,24 +87,27 @@ def carrega_arquivo():
     #         nome_temp = temp.name
     #     documento = carrega_txt(nome_temp)
     
-    return documentos
+    
 
 def carrega_modelo(provedor, modelo, api_key):
 
     #documento = carrega_arquivo(tipo_arquivo, arquivo)
-    documento = carrega_arquivo()
+    caminho = "/arquivos" 
+    documento = carrega_arquivo(caminho)
     
 
     system_message = ''' Você é um assistente técnico chamado 'assistente do Jonh Selmo'.
     Você possui acesso às seguintes informações vindas de um documento:
-    
+    """
+    {}
+    """
     
     Utilize as informações fornecidas para basear suas respostas.
 
     Sempre que houver $ na saída, substitua por S.
 
     Se a informação do documento for algo como "Just a moment...Enable JavaScript and coockies to continue", sugira ao usuário carregar novamente o 'Assistente do Jonh Selmo'!
-    '''
+    '''.format(documento)
     template = ChatPromptTemplate.from_messages([
         ('system', system_message),
         ('placeholder', '{chat_history}'),
@@ -125,24 +130,42 @@ def pagina_chat():
 
     memoria = st.session_state.get('memoria', MEMORIA)
     for mensagem in memoria.buffer_as_messages:
-        chat = st.chat_message(mensagem.type)
-        chat.markdown(mensagem.content)
+        # chat = st.chat_message(mensagem.type)
+        # chat.markdown(mensagem.content)
+        with st.chat_message(mensagem.type):  # Use 'with' para o contexto da mensagem
+            st.markdown(mensagem.content)
+        
 
     input_usuario = st.chat_input('Fale com o Assistente!')
     if input_usuario:
         memoria.chat_memory.add_user_message(input_usuario)
-        chat = st.chat_message('human')
-        chat.markdown(input_usuario)
+        # chat = st.chat_message('human')
+        # chat.markdown(input_usuario)
+        with st.chat_message('human'):  # Use 'with' para o contexto da mensagem
+            st.markdown(input_usuario)
 
-        chat = st.chat_message('ai')
-        resposta = chat.write_stream(chain.stream({
-            'input': input_usuario,
-            'chat_history': memoria.buffer_as_messages
-            }))
-        #resposta = chat_model.invoke(input_usuario).content
-        memoria.chat_memory.add_ai_message(resposta)
-        st.session_state['memoria'] = memoria
-        #st._rerun()
+        with st.chat_message('ai'):  # Use 'with' para o contexto da mensagem
+            resposta_completa = ""  # Acumula a resposta completa do stream
+            for chunk in chain.stream({
+                'input': input_usuario,
+                'chat_history': memoria.buffer_as_messages
+            }):
+                conteudo = chunk['text'] # Acesse o texto do chunk
+                resposta_completa += conteudo
+                st.write(conteudo) # Exibe cada chunk individualmente
+
+            memoria.chat_memory.add_ai_message(resposta_completa) # Adiciona a resposta completa à memória
+            st.session_state['memoria'] = memoria
+
+        # chat = st.chat_message('ai')
+        # resposta = chat.write_stream(chain.stream({
+        #     'input': input_usuario,
+        #     'chat_history': memoria.buffer_as_messages
+        #     }))
+        # #resposta = chat_model.invoke(input_usuario).content
+        # memoria.chat_memory.add_ai_message(resposta)
+        # st.session_state['memoria'] = memoria
+        # #st._rerun()
         
 def sidebar():
     #tabs_assistente = st.tabs(['Uploads de Arquivos', 'Modelo de IA'])

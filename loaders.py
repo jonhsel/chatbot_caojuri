@@ -3,7 +3,8 @@ from langchain_community.document_loaders import (WebBaseLoader,
                                                   YoutubeLoader,
                                                   CSVLoader,
                                                   PyPDFLoader,
-                                                  TextLoader
+                                                  TextLoader,
+                                                  DirectoryLoader
                                                   )
 import os
 
@@ -42,12 +43,9 @@ def carrega_txt(caminho):
     documento = '\n\n'.join([doc.page_content for doc in lista_documentos])
     return  documento
 
-def carrega_pasta(caminho):
-    documento=[]
-    for arquivos in os.listdir(caminho):
-        caminho_arquivo = os.path.join(caminho, arquivos)
-        loader = PyPDFLoader(caminho)
-        documento.extend(loader.load())
+def carrega_pasta(caminho, glob="*.pdf"):  # Novo: carrega arquivos de uma pasta
+    loader = DirectoryLoader(caminho, glob=glob)  # glob especifica quais arquivos carregar
+    documento = loader.load()
     return documento
 
 
