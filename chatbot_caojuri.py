@@ -7,6 +7,8 @@ from langchain_openai import ChatOpenAI
 from loaders import *
 
 from langchain.prompts import ChatPromptTemplate
+from langchain.document_loaders import PyPDFLoader
+
 
 #===============
 #CSS
@@ -16,7 +18,7 @@ with open('style.css') as f:
 
 #################
 
-st.image('images/juria.png')
+#st.image('images/juria.png')
 
 
 TIPOS_ARQUIVOS = ['Arquivos .pdf', 'Site', 'Youtube', 'Arquivos .csv', 'Arquivos .txt']
@@ -30,56 +32,77 @@ CONFIG_MODELOS = {  'OpenAI':
 
 MEMORIA = ConversationBufferMemory()
 
-def carrega_arquivo (tipo_arquivo, arquivo):
+def carrega_arquivo():
+
+    def carrega_pasta():
+        documentos = []
+        caminho = "arquivos/"  # Certifique-se que a pasta "arquivos" existe
+        try:
+            for arquivo in os.listdir(caminho):
+                if arquivo.endswith(".pdf"): # Verifica se o arquivo é PDF
+                    caminho_arquivo = os.path.join(caminho, arquivo)
+                    try:
+                        loader = PyPDFLoader(caminho_arquivo)
+                        documentos.extend(loader.load())
+                    except Exception as e:
+                        print(f"Erro ao carregar arquivo {arquivo}: {e}")
+                else:
+                    print(f"Arquivo ignorado por não ser PDF: {arquivo}")
+        except FileNotFoundError:
+            print(f"Pasta 'arquivos' não encontrada em {os.getcwd()}") # Informa o diretório atual
+            return None # Ou [] dependendo do que precisa que sua função retorne
+
+        return documentos
+    documentos = carrega_pasta()
+    
     
 
-    if tipo_arquivo == 'Site':
+    # if tipo_arquivo == 'Site':
         
-        documento = carrega_site(arquivo)
+    #     documento = carrega_site(arquivo)
         
         
         
 
-    if tipo_arquivo == 'Youtube':
-        documento = carrega_youtube(arquivo)
+    # if tipo_arquivo == 'Youtube':
+    #     documento = carrega_youtube(arquivo)
 
-    if tipo_arquivo == 'Arquivos .pdf':
-        with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp:
-            temp.write(arquivo.read())
-            nome_temp = temp.name
-        documento = carrega_pdf(nome_temp)
+    # if tipo_arquivo == 'Arquivos .pdf':
+    #     with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp:
+    #         temp.write(arquivo.read())
+    #         nome_temp = temp.name
+    #     documento = carrega_pdf(nome_temp)
 
-    if tipo_arquivo == 'Arquivos .csv':
-        with tempfile.NamedTemporaryFile(suffix='.csv', delete=False) as temp:
-            temp.write(arquivo.read())
-            nome_temp = temp.name
-        documento = carrega_csv(nome_temp)
+    # if tipo_arquivo == 'Arquivos .csv':
+    #     with tempfile.NamedTemporaryFile(suffix='.csv', delete=False) as temp:
+    #         temp.write(arquivo.read())
+    #         nome_temp = temp.name
+    #     documento = carrega_csv(nome_temp)
 
-    if tipo_arquivo == 'Arquivos .txt':
-        with tempfile.NamedTemporaryFile(suffix='.txt', delete=False) as temp:
-            temp.write(arquivo.read())
-            nome_temp = temp.name
-        documento = carrega_txt(nome_temp)
+    # if tipo_arquivo == 'Arquivos .txt':
+    #     with tempfile.NamedTemporaryFile(suffix='.txt', delete=False) as temp:
+    #         temp.write(arquivo.read())
+    #         nome_temp = temp.name
+    #     documento = carrega_txt(nome_temp)
     
-    return documento
+    return documentos
 
-def carrega_modelo(provedor, modelo, api_key, tipo_arquivo, arquivo):
+def carrega_modelo(provedor, modelo, api_key):
 
-    documento = carrega_arquivo(tipo_arquivo, arquivo)
+    #documento = carrega_arquivo(tipo_arquivo, arquivo)
+    documento = carrega_arquivo()
     
 
     system_message = ''' Você é um assistente técnico chamado 'assistente do Jonh Selmo'.
-    Você possui acesso às seguintes informações vindas de um documento{}:
+    Você possui acesso às seguintes informações vindas de um documento:
     
-    ####
-    {}
-    ####
+    
     Utilize as informações fornecidas para basear suas respostas.
 
     Sempre que houver $ na saída, substitua por S.
 
     Se a informação do documento for algo como "Just a moment...Enable JavaScript and coockies to continue", sugira ao usuário carregar novamente o 'Assistente do Jonh Selmo'!
-    '''.format(tipo_arquivo, documento)
+    '''
     template = ChatPromptTemplate.from_messages([
         ('system', system_message),
         ('placeholder', '{chat_history}'),
@@ -122,32 +145,33 @@ def pagina_chat():
         #st._rerun()
         
 def sidebar():
-    tabs_assistente = st.tabs(['Uploads de Arquivos', 'Modelo de IA'])
-    with tabs_assistente[0]:
-        tipo_arquivo = st.selectbox('selecione o tipo de URL ou arquivo', TIPOS_ARQUIVOS)
-        if tipo_arquivo == 'Site':
-            arquivo = st.text_input('Digite a URL do site')
-        if tipo_arquivo == 'Youtube':
-            arquivo = st.text_input('Digite o ID Youtube : Código alfanumérico situado entre "v=" e "&" da URL')
-        if tipo_arquivo == 'Arquivos .pdf':
-            arquivo = st.file_uploader('Carregue o arquivo do tipo .pdf', type=['.pdf'])
-        if tipo_arquivo == 'Arquivos .csv':
-            arquivo = st.file_uploader('Carregue o arquivo do tipo .csv', type=['.csv'])
-        if tipo_arquivo == 'Arquivos .txt':
-            arquivo = st.file_uploader('Carregue o arquivo do tipo .txt', type=['.txt'])
+    #tabs_assistente = st.tabs(['Uploads de Arquivos', 'Modelo de IA'])
+    tabs_assistente = st.tabs(['Modelo de IA'])
+    #  with tabs_assistente[0]:
+    #     tipo_arquivo = st.selectbox('selecione o tipo de URL ou arquivo', TIPOS_ARQUIVOS)
+    #     if tipo_arquivo == 'Site':
+    #         arquivo = st.text_input('Digite a URL do site')
+    #     if tipo_arquivo == 'Youtube':
+    #         arquivo = st.text_input('Digite o ID Youtube : Código alfanumérico situado entre "v=" e "&" da URL')
+    #     if tipo_arquivo == 'Arquivos .pdf':
+    #         arquivo = st.file_uploader('Carregue o arquivo do tipo .pdf', type=['.pdf'])
+    #     if tipo_arquivo == 'Arquivos .csv':
+    #         arquivo = st.file_uploader('Carregue o arquivo do tipo .csv', type=['.csv'])
+    #     if tipo_arquivo == 'Arquivos .txt':
+    #         arquivo = st.file_uploader('Carregue o arquivo do tipo .txt', type=['.txt']) 
         
-    with tabs_assistente[1]:
+    with tabs_assistente[0]:
         provedor = st.selectbox('Selecione a empresa criadora do modelo de IA', CONFIG_MODELOS.keys())
         modelo = st.selectbox('Selecione o modelo de IA', CONFIG_MODELOS[provedor]['modelos'])
         api_key = st.text_input(
             f'Adicione a API do modelo escolhido{provedor}',
             value=st.session_state.get(f'api_key_{provedor}')
         )
-        st.session_state[f'api_key_{provedor}'] = api_key
+        st.session_state[f'api_key_{provedor}'] = api_key    
 
 
     if st.button('▶️ Iniciar o Assistente', use_container_width=True):
-        carrega_modelo(provedor, modelo, api_key, tipo_arquivo, arquivo)
+        carrega_modelo(provedor, modelo, api_key)
 
     if st.button('🗑️ Limpar o histórico de conversação', use_container_width=True):
         st.session_state['memoria'] = MEMORIA

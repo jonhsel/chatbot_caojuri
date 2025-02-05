@@ -5,6 +5,7 @@ from langchain_community.document_loaders import (WebBaseLoader,
                                                   PyPDFLoader,
                                                   TextLoader
                                                   )
+import os
 
 
 def carrega_site(url):
@@ -40,6 +41,14 @@ def carrega_txt(caminho):
     lista_documentos = loader.load()
     documento = '\n\n'.join([doc.page_content for doc in lista_documentos])
     return  documento
+
+def carrega_pasta(caminho):
+    documento=[]
+    for arquivos in os.listdir(caminho):
+        caminho_arquivo = os.path.join(caminho, arquivos)
+        loader = PyPDFLoader(caminho)
+        documento.extend(loader.load())
+    return documento
 
 
 
