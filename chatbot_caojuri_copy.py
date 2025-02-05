@@ -34,8 +34,12 @@ def carrega_arquivo (tipo_arquivo, arquivo):
     
 
     if tipo_arquivo == 'PASTA':
-        
-        documento = carrega_pasta(arquivo)
+            pasta = st.text_input('Digite o caminho da pasta')
+            if pasta and os.path.isdir(pasta):
+                arquivo = pasta
+            else:
+                st.error('Caminho inválido')
+                arquivo = None
 
 
     if tipo_arquivo == 'Site':

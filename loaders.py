@@ -43,9 +43,18 @@ def carrega_txt(caminho):
     documento = '\n\n'.join([doc.page_content for doc in lista_documentos])
     return  documento
 
-def carrega_pasta(caminho, glob="*.pdf"):  # Novo: carrega arquivos de uma pasta
-    loader = DirectoryLoader(caminho, glob=glob)  # glob especifica quais arquivos carregar
-    documento = loader.load()
+def carrega_pasta(caminho):
+    loader = DirectoryLoader(
+        caminho,
+        glob="**/*.*",  # Carrega todos os arquivos
+        loader_cls={
+            ".pdf": PyPDFLoader,
+            ".csv": CSVLoader,
+            ".txt": TextLoader
+        }
+    )
+    lista_documentos = loader.load()
+    documento = '\n\n'.join([doc.page_content for doc in lista_documentos])
     return documento
 
 
